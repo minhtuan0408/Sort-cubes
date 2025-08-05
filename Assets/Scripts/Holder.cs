@@ -9,9 +9,13 @@ public class Holder : MonoBehaviour
     public Transform Stack;
     public bool IsPicked;
 
+    public GameObject Freeze;
+    public GameObject ColorList;
+    public bool IsHidden;
     public List<ColorPoint> stackColor = new List<ColorPoint>();
     public bool isFull => stackColor.Count >= 4;
     public ColorPoint TopColorPoint => stackColor.LastOrDefault();
+
 
     private void Start()
     {
@@ -20,12 +24,13 @@ public class Holder : MonoBehaviour
     public void Init()
     {
         IsPicked = false;
+        IsHidden = false;
     }
 
     public void AddPointColor(int id)
     {
         Vector3 topPoint = Stack.position + Vector3.up * (stackColor.Count * 1.01f);
-        var newColorPoint = Instantiate(ColorPointPrefab,transform);
+        var newColorPoint = Instantiate(ColorPointPrefab,ColorList.transform);
         newColorPoint.transform.position = topPoint;
         newColorPoint.ID = id;
         newColorPoint.SetColor(id);
@@ -36,7 +41,7 @@ public class Holder : MonoBehaviour
 
     public void PickThis()
     {
-        Debug.Log("PickThis - Holder.cs");
+        //Debug.Log("PickThis - Holder.cs");
         IsPicked = true;
         if (stackColor.Count <= 0)
         {
@@ -46,7 +51,7 @@ public class Holder : MonoBehaviour
 
         foreach (var colorPoint in list)
         {
-            print("Tên Color trong stack : " + colorPoint.name);
+            //print("Tên Color trong stack : " + colorPoint.name);
             colorPoint.MoveOn(colorPoint.TargetPoint);
         }
     }
@@ -56,7 +61,7 @@ public class Holder : MonoBehaviour
         List<ColorPoint> list = GetColorOnTop();
         foreach (var colorPoint in list)
         {
-            print("Tên Color trong stack : " + colorPoint.name);
+            //print("Tên Color trong stack : " + colorPoint.name);
             colorPoint.MoveOn(colorPoint.OriginalPoint);
         }
     }
@@ -77,15 +82,15 @@ public class Holder : MonoBehaviour
 
     public IEnumerator PushOutColor(Holder Taked)
     {
-        print("Put Out" + gameObject.name);
+        //print("Put Out" + gameObject.name);
         int maxSlotTaked = Taked.stackColor.Count;
         int availableSlot = 4 - maxSlotTaked;
         
         if (TopColorPoint == null) yield break;
-        print(TopColorPoint);
+        //print(TopColorPoint);
         if (maxSlotTaked >= 0) 
         {
-            print("availableSlot " + availableSlot);
+            //print("availableSlot " + availableSlot);
             List<ColorPoint> list = GetColorOnTop();
             int transferCount = Mathf.Min(availableSlot, list.Count);
             for (int i = 0; i < transferCount; i++)
@@ -93,16 +98,40 @@ public class Holder : MonoBehaviour
                 var colorPoint = list[list.Count - (i+1)];
                 stackColor.Remove(colorPoint);
                 Taked.stackColor.Add(colorPoint);
-                colorPoint.transform.SetParent(Taked.transform);
+                colorPoint.transform.SetParent(Taked.ColorList.transform);
 
                 Vector3 newPos = Taked.Stack.position + new Vector3(0, (Taked.stackColor.Count-1) * 1.01f, 0);
 
                 colorPoint.MoveOut(newPos, 10f);
                 colorPoint.NewOriginalPoint(newPos);
+                yield return new WaitForSeconds(0.2f);
+
             }
         }
         yield return null;
     }
 
+    public void CheckDoneColumn()
+    {
+        if (isFull)
+        {
+            foreach (var stack in stackColor)
+            {
+                if (stack.ID != TopColorPoint.ID)
+                {
+                    return;
+                }
+            }
+            Freeze.SetActive(true);
+            ColorColumnAnimation();
+            IsHidden = true;
+            SoundManager.PlaySFX("Freeze");
+        } 
+    }
 
+    private void ColorColumnAnimation()
+    {
+        Animator anim = ColorList.GetComponent<Animator>();
+        anim.SetBool("IsDone", true);
+    }
 }

@@ -62,14 +62,14 @@ public class ColorPoint : MonoBehaviour
 
         while (Vector3.Distance(transform.position, targetPosition) > 0.01f)
         {
-            // Di chuyển tới target
+
             transform.position = Vector3.MoveTowards(
                 transform.position,
                 targetPosition,
                 moveSpeed * Time.deltaTime
             );
 
-            // Xoay khi đang di chuyển
+ 
             float rotationThisFrame = rotateSpeed * Time.deltaTime;
             if (totalRotation < targetRotation)
             {
@@ -80,10 +80,8 @@ public class ColorPoint : MonoBehaviour
             yield return null;
         }
 
-        // Snap vị trí chính xác
         transform.position = targetPosition;
 
-        // Xoay lại về rotation ban đầu
         while (Quaternion.Angle(transform.rotation, originalRotation) > 0.1f)
         {
             transform.rotation = Quaternion.RotateTowards(
